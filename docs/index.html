@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Short Ops Monitor | Joseph Yuschak</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F4F6F9; color: #222; }
+  header { background: #1B3A5C; color: #FFFFFF; padding: 28px 40px; }
+  header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+  header p { font-size: 13px; opacity: 0.7; margin-top: 4px; }
+  .kpi-strip { display: flex; gap: 16px; padding: 24px 40px; flex-wrap: wrap; }
+  .kpi { background: #FFFFFF; border-radius: 8px; padding: 18px 24px; flex: 1; min-width: 160px;
+           border-top: 4px solid #1B3A5C; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+  .kpi .val { font-size: 28px; font-weight: 800; color: #1B3A5C; }
+  .kpi .lbl { font-size: 12px; color: #6C757D; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi.alert .val { color: #C0392B; }
+  .kpi.gold  .val { color: #C9A84C; }
+  .section { margin: 0 40px 32px; }
+  .section h2 { font-size: 15px; font-weight: 700; color: #1B3A5C; border-bottom: 2px solid #1B3A5C;
+                 padding-bottom: 8px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card { background: #FFFFFF; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #1B3A5C; color: #FFFFFF; padding: 10px 14px; text-align: left; font-size: 11px;
+        text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+  td { padding: 10px 14px; border-bottom: 1px solid #eef0f3; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8f9fc; }
+  .note { font-size: 11px; color: #6C757D; margin-top: 8px; }
+  footer { text-align: center; padding: 24px; font-size: 12px; color: #6C757D; }
+  footer a { color: #1B3A5C; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Short Ops Monitor</h1>
+  <p>Prime Broker Rate Intelligence · HTB/ETB Surveillance · Recall Risk · Fails Tracker &nbsp;|&nbsp; As of 2026-06-25 &nbsp;|&nbsp; <a href="https://github.com/yuschajp" style="color:#C9A84C">github.com/yuschajp</a></p>
+</header>
+
+<!-- KPI Strip -->
+<div class="kpi-strip">
+  <div class="kpi gold">
+    <div class="val">$29,936</div>
+    <div class="lbl">Est. Annual PB Savings</div>
+  </div>
+  <div class="kpi alert">
+    <div class="val">31</div>
+    <div class="lbl">HTB Rate Occurrences</div>
+  </div>
+  <div class="kpi alert">
+    <div class="val">2</div>
+    <div class="lbl">Urgent Recall Alerts</div>
+  </div>
+  <div class="kpi alert">
+    <div class="val">1</div>
+    <div class="lbl">Rule 204 Breaches</div>
+  </div>
+  <div class="kpi">
+    <div class="val">$1,136,850</div>
+    <div class="lbl">Total Annual Carry Cost</div>
+  </div>
+</div>
+
+<!-- PB Rate Comparison -->
+<div class="section">
+  <h2>Multi-PB Rate Comparison — Borrow Optimization</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Sector</th><th>Shares Short</th>
+        <th>Best PB / Rate</th><th>Worst PB / Rate</th>
+        <th>Spread (bps)</th><th>Est. Annual Savings</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>SPCE</strong></td>
+          <td>Aerospace</td>
+          <td>80,000</td>
+          <td style="color:#27AE60;font-weight:700">JPMorgan<br><small>11.87%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>12.25%</small></td>
+          <td style="color:#E67E22;font-weight:700">38.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$6,080</td>
+        </tr>
+        <tr>
+          <td><strong>INFA</strong></td>
+          <td>Technology</td>
+          <td>18,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>0.77%</small></td>
+          <td style="color:#C0392B">JPMorgan<br><small>1.10%</small></td>
+          <td style="color:#E67E22;font-weight:700">33.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$1,188</td>
+        </tr>
+        <tr>
+          <td><strong>AMC</strong></td>
+          <td>Entertainment</td>
+          <td>120,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>17.89%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>18.18%</small></td>
+          <td style="color:#E67E22;font-weight:700">29.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$6,960</td>
+        </tr>
+        <tr>
+          <td><strong>AMZN</strong></td>
+          <td>Consumer</td>
+          <td>20,000</td>
+          <td style="color:#27AE60;font-weight:700">Morgan Stanley<br><small>1.04%</small></td>
+          <td style="color:#C0392B">Goldman<br><small>1.26%</small></td>
+          <td style="color:#E67E22;font-weight:700">22.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$880</td>
+        </tr>
+        <tr>
+          <td><strong>TPVG</strong></td>
+          <td>Financials</td>
+          <td>28,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>1.41%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>1.63%</small></td>
+          <td style="color:#E67E22;font-weight:700">22.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$1,232</td>
+        </tr>
+        <tr>
+          <td><strong>KO</strong></td>
+          <td>Consumer</td>
+          <td>55,000</td>
+          <td style="color:#27AE60;font-weight:700">Morgan Stanley<br><small>0.72%</small></td>
+          <td style="color:#C0392B">JPMorgan<br><small>0.93%</small></td>
+          <td style="color:#E67E22;font-weight:700">21.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$2,310</td>
+        </tr>
+        <tr>
+          <td><strong>PFE</strong></td>
+          <td>Healthcare</td>
+          <td>35,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>1.29%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>1.49%</small></td>
+          <td style="color:#E67E22;font-weight:700">20.0 bps</td>
+          <td style="color:#E67E22;font-weight:700">$1,400</td>
+        </tr>
+        <tr>
+          <td><strong>TSLA</strong></td>
+          <td>Automotive</td>
+          <td>60,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>2.46%</small></td>
+          <td style="color:#C0392B">JPMorgan<br><small>2.64%</small></td>
+          <td style="color:#6C757D;font-weight:700">18.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$2,160</td>
+        </tr>
+        <tr>
+          <td><strong>BA</strong></td>
+          <td>Industrials</td>
+          <td>25,000</td>
+          <td style="color:#27AE60;font-weight:700">JPMorgan<br><small>1.65%</small></td>
+          <td style="color:#C0392B">Goldman<br><small>1.81%</small></td>
+          <td style="color:#6C757D;font-weight:700">16.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$800</td>
+        </tr>
+        <tr>
+          <td><strong>NKLA</strong></td>
+          <td>Automotive</td>
+          <td>95,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>21.86%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>22.01%</small></td>
+          <td style="color:#6C757D;font-weight:700">15.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$2,850</td>
+        </tr>
+        <tr>
+          <td><strong>MSFT</strong></td>
+          <td>Technology</td>
+          <td>30,000</td>
+          <td style="color:#27AE60;font-weight:700">Morgan Stanley<br><small>0.83%</small></td>
+          <td style="color:#C0392B">JPMorgan<br><small>0.96%</small></td>
+          <td style="color:#6C757D;font-weight:700">13.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$780</td>
+        </tr>
+        <tr>
+          <td><strong>AAPL</strong></td>
+          <td>Technology</td>
+          <td>50,000</td>
+          <td style="color:#27AE60;font-weight:700">JPMorgan<br><small>0.33%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>0.45%</small></td>
+          <td style="color:#6C757D;font-weight:700">12.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$1,200</td>
+        </tr>
+        <tr>
+          <td><strong>VIAV</strong></td>
+          <td>Technology</td>
+          <td>33,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>1.37%</small></td>
+          <td style="color:#C0392B">Morgan Stanley<br><small>1.48%</small></td>
+          <td style="color:#6C757D;font-weight:700">11.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$726</td>
+        </tr>
+        <tr>
+          <td><strong>META</strong></td>
+          <td>Technology</td>
+          <td>45,000</td>
+          <td style="color:#27AE60;font-weight:700">Morgan Stanley<br><small>0.64%</small></td>
+          <td style="color:#C0392B">Goldman<br><small>0.73%</small></td>
+          <td style="color:#6C757D;font-weight:700">9.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$810</td>
+        </tr>
+        <tr>
+          <td><strong>CVS</strong></td>
+          <td>Healthcare</td>
+          <td>40,000</td>
+          <td style="color:#27AE60;font-weight:700">Goldman<br><small>1.20%</small></td>
+          <td style="color:#C0392B">JPMorgan<br><small>1.27%</small></td>
+          <td style="color:#6C757D;font-weight:700">7.0 bps</td>
+          <td style="color:#6C757D;font-weight:700">$560</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <p class="note">* Savings estimate uses $20 assumed avg price. Real implementation uses live price feed from Bloomberg/Refinitiv.</p>
+</div>
+
+<!-- HTB Alerts -->
+<div class="section">
+  <h2>HTB / ETB Overnight Alerts</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Prime Broker</th><th>Prior Rate</th>
+        <th>Current Rate</th><th>Change</th><th>Flags</th>
+      </tr></thead>
+      <tbody>
+            <tr>
+              <td><strong>TPVG</strong></td>
+              <td>Morgan Stanley</td>
+              <td>0.42%</td>
+              <td style="color:#C0392B;font-weight:700">1.63%</td>
+              <td style="color:#C0392B;font-weight:700">+121.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>TPVG</strong></td>
+              <td>Goldman</td>
+              <td>0.22%</td>
+              <td style="color:#C0392B;font-weight:700">1.41%</td>
+              <td style="color:#C0392B;font-weight:700">+119.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>TPVG</strong></td>
+              <td>JPMorgan</td>
+              <td>0.29%</td>
+              <td style="color:#C0392B;font-weight:700">1.47%</td>
+              <td style="color:#C0392B;font-weight:700">+118.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>VIAV</strong></td>
+              <td>Morgan Stanley</td>
+              <td>0.49%</td>
+              <td style="color:#C0392B;font-weight:700">1.48%</td>
+              <td style="color:#C0392B;font-weight:700">+99.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>AMZN</strong></td>
+              <td>Goldman</td>
+              <td>0.32%</td>
+              <td style="color:#C0392B;font-weight:700">1.26%</td>
+              <td style="color:#C0392B;font-weight:700">+94.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>VIAV</strong></td>
+              <td>Goldman</td>
+              <td>0.45%</td>
+              <td style="color:#C0392B;font-weight:700">1.37%</td>
+              <td style="color:#C0392B;font-weight:700">+92.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>AMZN</strong></td>
+              <td>JPMorgan</td>
+              <td>0.22%</td>
+              <td style="color:#C0392B;font-weight:700">1.08%</td>
+              <td style="color:#C0392B;font-weight:700">+86.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>VIAV</strong></td>
+              <td>JPMorgan</td>
+              <td>0.63%</td>
+              <td style="color:#C0392B;font-weight:700">1.43%</td>
+              <td style="color:#C0392B;font-weight:700">+80.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>AMZN</strong></td>
+              <td>Morgan Stanley</td>
+              <td>0.43%</td>
+              <td style="color:#C0392B;font-weight:700">1.04%</td>
+              <td style="color:#C0392B;font-weight:700">+61.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>CVS</strong></td>
+              <td>JPMorgan</td>
+              <td>0.71%</td>
+              <td style="color:#C0392B;font-weight:700">1.27%</td>
+              <td style="color:#C0392B;font-weight:700">+56.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>CVS</strong></td>
+              <td>Morgan Stanley</td>
+              <td>0.74%</td>
+              <td style="color:#C0392B;font-weight:700">1.23%</td>
+              <td style="color:#C0392B;font-weight:700">+49.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>CVS</strong></td>
+              <td>Goldman</td>
+              <td>0.85%</td>
+              <td style="color:#C0392B;font-weight:700">1.20%</td>
+              <td style="color:#C0392B;font-weight:700">+35.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>MSFT</strong></td>
+              <td>JPMorgan</td>
+              <td>0.62%</td>
+              <td style="color:#C0392B;font-weight:700">0.96%</td>
+              <td style="color:#C0392B;font-weight:700">+34.0 bps</td>
+              <td><span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>MSFT</strong></td>
+              <td>Goldman</td>
+              <td>0.54%</td>
+              <td style="color:#C0392B;font-weight:700">0.87%</td>
+              <td style="color:#C0392B;font-weight:700">+33.0 bps</td>
+              <td><span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>MSFT</strong></td>
+              <td>Morgan Stanley</td>
+              <td>0.51%</td>
+              <td style="color:#C0392B;font-weight:700">0.83%</td>
+              <td style="color:#C0392B;font-weight:700">+32.0 bps</td>
+              <td><span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>PFE</strong></td>
+              <td>JPMorgan</td>
+              <td>1.15%</td>
+              <td style="color:#C0392B;font-weight:700">1.46%</td>
+              <td style="color:#C0392B;font-weight:700">+31.0 bps</td>
+              <td><span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr>
+            <tr>
+              <td><strong>INFA</strong></td>
+              <td>JPMorgan</td>
+              <td>0.79%</td>
+              <td style="color:#C0392B;font-weight:700">1.10%</td>
+              <td style="color:#C0392B;font-weight:700">+31.0 bps</td>
+              <td><span style="background:#C0392B;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">ETB→HTB</span> <span style="background:#E67E22;color:#fff;padding:2px 6px;border-radius:3px;font-size:10px">RATE SPIKE</span></td>
+            </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Cost of Carry -->
+<div class="section">
+  <h2>Cost of Carry — Short Book Borrow Drag</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Sector</th><th>Shares Short</th>
+        <th>Best Rate</th><th>Est. Annual Borrow Cost</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>AMC</strong></td>
+          <td>Entertainment</td>
+          <td>120,000</td>
+          <td>17.89%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:37%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$429,360</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>NKLA</strong></td>
+          <td>Automotive</td>
+          <td>95,000</td>
+          <td>21.86%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:36%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$415,340</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>SPCE</strong></td>
+          <td>Aerospace</td>
+          <td>80,000</td>
+          <td>11.87%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:16%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$189,920</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>TSLA</strong></td>
+          <td>Automotive</td>
+          <td>60,000</td>
+          <td>2.46%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:2%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$29,520</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>CVS</strong></td>
+          <td>Healthcare</td>
+          <td>40,000</td>
+          <td>1.20%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$9,600</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>VIAV</strong></td>
+          <td>Technology</td>
+          <td>33,000</td>
+          <td>1.37%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$9,042</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>PFE</strong></td>
+          <td>Healthcare</td>
+          <td>35,000</td>
+          <td>1.29%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$9,030</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>BA</strong></td>
+          <td>Industrials</td>
+          <td>25,000</td>
+          <td>1.65%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$8,250</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>KO</strong></td>
+          <td>Consumer</td>
+          <td>55,000</td>
+          <td>0.72%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$7,920</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>TPVG</strong></td>
+          <td>Financials</td>
+          <td>28,000</td>
+          <td>1.41%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$7,896</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>META</strong></td>
+          <td>Technology</td>
+          <td>45,000</td>
+          <td>0.64%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$5,760</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>MSFT</strong></td>
+          <td>Technology</td>
+          <td>30,000</td>
+          <td>0.83%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$4,980</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>AMZN</strong></td>
+          <td>Consumer</td>
+          <td>20,000</td>
+          <td>1.04%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$4,160</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>AAPL</strong></td>
+          <td>Technology</td>
+          <td>50,000</td>
+          <td>0.33%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$3,300</span>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>INFA</strong></td>
+          <td>Technology</td>
+          <td>18,000</td>
+          <td>0.77%</td>
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="background:#1B3A5C;height:8px;width:0%;border-radius:4px;min-width:4px"></div>
+              <span style="font-weight:700">$2,772</span>
+            </div>
+          </td>
+        </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Recall Risk -->
+<div class="section">
+  <h2>Recall Risk — Upcoming Record Dates</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Event</th><th>Record Date</th>
+        <th>Days Until</th><th>Urgency</th><th>Shares at Risk</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>MSFT</strong></td>
+          <td>Quarterly Dividend</td>
+          <td>2026-06-27</td>
+          <td style="font-weight:700;color:#C0392B">2d</td>
+          <td><span style="background:#C0392B;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">URGENT</span></td>
+          <td>30,000</td>
+        </tr>
+        <tr>
+          <td><strong>KO</strong></td>
+          <td>Quarterly Dividend</td>
+          <td>2026-06-28</td>
+          <td style="font-weight:700;color:#C0392B">3d</td>
+          <td><span style="background:#C0392B;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">URGENT</span></td>
+          <td>55,000</td>
+        </tr>
+        <tr>
+          <td><strong>AAPL</strong></td>
+          <td>Quarterly Dividend</td>
+          <td>2026-06-30</td>
+          <td style="font-weight:700;color:#E67E22">5d</td>
+          <td><span style="background:#E67E22;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">WARNING</span></td>
+          <td>50,000</td>
+        </tr>
+        <tr>
+          <td><strong>PFE</strong></td>
+          <td>Quarterly Dividend</td>
+          <td>2026-07-03</td>
+          <td style="font-weight:700;color:#C9A84C">8d</td>
+          <td><span style="background:#C9A84C;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">WATCH</span></td>
+          <td>35,000</td>
+        </tr>
+        <tr>
+          <td><strong>META</strong></td>
+          <td>Proxy Vote</td>
+          <td>2026-07-07</td>
+          <td style="font-weight:700;color:#C9A84C">12d</td>
+          <td><span style="background:#C9A84C;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">WATCH</span></td>
+          <td>45,000</td>
+        </tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Fails & Rule 204 -->
+<div class="section">
+  <h2>Settlement Fails & Rule 204 Tracker</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Ticker</th><th>Sale Type</th><th>Fail Date</th>
+        <th>Age</th><th>Shares Failed</th><th>Rule 204</th><th>Threshold List</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>AMC</strong></td>
+          <td>SHORT</td>
+          <td>2026-06-22</td>
+          <td style="font-weight:700;color:#C0392B">3d</td>
+          <td>15,000</td>
+          <td><span style="background:#C0392B;color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">⚠ RULE 204</span></td>
+          <td><span style="color:#C0392B">Yes (12d)</span></td>
+        </tr>
+        <tr>
+          <td><strong>SPCE</strong></td>
+          <td>SHORT</td>
+          <td>2026-06-23</td>
+          <td style="font-weight:700;color:#E67E22">2d</td>
+          <td>5,000</td>
+          <td><span style="color:{GRAY}">—</span></td>
+          <td><span style="color:#C0392B">Yes (3d)</span></td>
+        </tr>
+        <tr>
+          <td><strong>NKLA</strong></td>
+          <td>SHORT</td>
+          <td>2026-06-24</td>
+          <td style="font-weight:700;color:#E67E22">1d</td>
+          <td>8,000</td>
+          <td><span style="color:{GRAY}">—</span></td>
+          <td><span style="color:#C0392B">Yes (7d)</span></td>
+        </tr>
+        <tr>
+          <td><strong>BA</strong></td>
+          <td>LONG</td>
+          <td>2026-06-24</td>
+          <td style="font-weight:700;color:#E67E22">1d</td>
+          <td>2,000</td>
+          <td><span style="color:{GRAY}">—</span></td>
+          <td>No</td>
+        </tr></tbody>
+    </table>
+  </div>
+  <p class="note">* Rule 204 breach = short sale fail aged 3+ business days. Threshold list = SEC persistent FTD registry.</p>
+</div>
+
+<footer>
+  Built by <a href="https://joseph-yuschak.notion.site">Joseph Yuschak</a> &nbsp;·&nbsp;
+  <a href="https://github.com/yuschajp/short_ops_monitor">GitHub</a> &nbsp;·&nbsp;
+  Simulated PB data — production implementation uses live API feeds from prime brokers
+</footer>
+
+</body>
+</html>

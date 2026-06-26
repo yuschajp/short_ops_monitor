@@ -1,0 +1,5 @@
+data/short_ops.db
+logs/
+__pycache__/
+*.pyc
+.DS_Store
