@@ -1,0 +1,69 @@
+
+<!-- Borrow Rate History Chart -->
+<div class="section">
+  <h2>Borrow Rate History — 30 Day Trend</h2>
+  <div class="card" style="padding:16px">
+    <div style="margin-bottom:12px;font-size:12px;color:#6C757D">
+      Best available rate across all prime brokers per day. HTB threshold = 1.00%.
+    </div>
+    <canvas id="rateChart" height="80"></canvas>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+const rateData = RATE_DATA_PLACEHOLDER;
+const allDates = [...new Set(rateData.map(r => r.report_date))].sort();
+
+const tickerAvg = {};
+rateData.forEach(r => {
+  if (!tickerAvg[r.ticker]) tickerAvg[r.ticker] = [];
+  tickerAvg[r.ticker].push(r.best_rate);
+});
+const topTickers = Object.entries(tickerAvg)
+  .map(([t, rates]) => ({ ticker: t, avg: rates.reduce((a,b)=>a+b,0)/rates.length }))
+  .sort((a,b) => b.avg - a.avg)
+  .slice(0, 6)
+  .map(x => x.ticker);
+
+const palette = ["#1B3A5C","#C9A84C","#C0392B","#27AE60","#E67E22","#8E44AD"];
+
+const datasets = topTickers.map((ticker, i) => {
+  const tickerRows = rateData.filter(r => r.ticker === ticker);
+  const dateMap = Object.fromEntries(tickerRows.map(r => [r.report_date, r.best_rate]));
+  return {
+    label: ticker,
+    data: allDates.map(d => dateMap[d] ?? null),
+    borderColor: palette[i % palette.length],
+    backgroundColor: palette[i % palette.length] + "20",
+    borderWidth: 2, pointRadius: 2, tension: 0.3, fill: false, spanGaps: true,
+  };
+});
+
+datasets.push({
+  label: "HTB Threshold (1.00%)",
+  data: allDates.map(() => 1.0),
+  borderColor: "#C0392B", borderWidth: 1,
+  borderDash: [6,3], pointRadius: 0, fill: false,
+});
+
+new Chart(document.getElementById("rateChart"), {
+  type: "line",
+  data: { labels: allDates, datasets },
+  options: {
+    responsive: true,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { position: "top", labels: { font: { size: 11 }, boxWidth: 14 } },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y?.toFixed(2)}%` } }
+    },
+    scales: {
+      x: { ticks: { font: { size: 10 }, maxTicksLimit: 10 }, grid: { display: false } },
+      y: {
+        ticks: { callback: v => v.toFixed(2) + "%", font: { size: 10 } },
+        title: { display: true, text: "Annualized Borrow Rate (%)", font: { size: 11 } }
+      }
+    }
+  }
+});
+</script>

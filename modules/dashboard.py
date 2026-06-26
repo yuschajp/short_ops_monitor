@@ -21,8 +21,10 @@ def status_badge(status):
     color = RED if status == "HTB" else GREEN
     return f'<span style="background:{color};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">{status}</span>'
 
-def generate_dashboard(as_of, pb_comp, htb_alerts, carry, total_carry, recalls, fails, threshold):
-    os.makedirs(os.path.join(os.path.dirname(__file__), "docs"), exist_ok=True)
+def generate_dashboard(as_of, pb_comp, htb_alerts, carry, total_carry, recalls, fails, threshold, rate_history=None):
+    import json
+    repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.makedirs(os.path.join(repo_root, "docs"), exist_ok=True)
 
     # ── PB Comparison table ──
     pb_rows = ""
@@ -251,6 +253,52 @@ def generate_dashboard(as_of, pb_comp, htb_alerts, carry, total_carry, recalls, 
   <p class="note">* Rule 204 breach = short sale fail aged 3+ business days. Threshold list = SEC persistent FTD registry.</p>
 </div>
 
+
+CHART_SECTION_PLACEHOLDER
+<script>
+const rateData = RATE_DATA_PLACEHOLDER;
+
+// Build labels from all unique dates
+const allDates = [...new Set(rateData.map(r => r.report_date))].sort();
+
+// HTB names for special highlighting
+const htbNames = rateData
+  .filter(r => r.best_rate > 1.0)
+  .map(r => r.ticker);
+const htbSet = new Set(htbNames);
+
+// Pick top 6 most interesting tickers (highest avg rate)
+const tickerAvg = {{}};
+rateData.forEach(r => {{
+  if (!tickerAvg[r.ticker]) tickerAvg[r.ticker] = [];
+  tickerAvg[r.ticker].push(r.best_rate);
+}});
+const topTickers = Object.entries(tickerAvg)
+  .map(([t, rates]) => ({{ ticker: t, avg: rates.reduce((a,b)=>a+b,0)/rates.length }}))
+  .sort((a,b) => b.avg - a.avg)
+  .slice(0, 6)
+  .map(x => x.ticker);
+
+const palette = ["#1B3A5C","#C9A84C","#C0392B","#27AE60","#E67E22","#8E44AD"];
+
+const datasets = topTickers.map((ticker, i) => {{
+  const tickerRows = rateData.filter(r => r.ticker === ticker);
+  const dateMap = Object.fromEntries(tickerRows.map(r => [r.report_date, r.best_rate]));
+  return {{
+    label: ticker,
+    data: allDates.map(d => dateMap[d] ?? null),
+    borderColor: palette[i % palette.length],
+    backgroundColor: palette[i % palette.length] + "20",
+    borderWidth: 2,
+    pointRadius: 2,
+    tension: 0.3,
+    fill: false,
+    spanGaps: true,
+  }};
+}});
+
+// HTB threshold line
+
 <footer>
   Built by <a href="https://joseph-yuschak.notion.site">Joseph Yuschak</a> &nbsp;·&nbsp;
   <a href="https://github.com/yuschajp/short_ops_monitor">GitHub</a> &nbsp;·&nbsp;
@@ -261,7 +309,18 @@ def generate_dashboard(as_of, pb_comp, htb_alerts, carry, total_carry, recalls, 
 </html>"""
 
     repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    # Load chart template (separate file avoids f-string / JS brace conflicts)
+    chart_tmpl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_chart_template.html")
+    with open(chart_tmpl_path) as ct:
+        chart_html = ct.read()
+
+    # Inject rate history JSON into chart template
+    chart_json = json.dumps(rate_history) if rate_history else "[]"
+    chart_html = chart_html.replace("RATE_DATA_PLACEHOLDER", chart_json)
+
+    # Inject chart into main HTML at placeholder
+    html = html.replace("CHART_SECTION_PLACEHOLDER", chart_html)
+
     out_path = os.path.join(repo_root, "docs", "index.html")
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w") as f:
         f.write(html)

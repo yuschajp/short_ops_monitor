@@ -161,3 +161,28 @@ def threshold_report():
         FROM threshold_securities
         ORDER BY days_on_list DESC
     """)
+
+# ── 6. HISTORICAL RATE TREND ─────────────────────────────────────────────────
+
+def borrow_rate_history(tickers: list = None, days: int = 30):
+    """
+    Returns daily best borrow rate (across all PBs) per ticker for the past N days.
+    Used to power the trend chart on the dashboard.
+    """
+    if tickers:
+        placeholders = ",".join("?" * len(tickers))
+        rows = query(f"""
+            SELECT report_date, ticker, MIN(borrow_rate_pct) as best_rate
+            FROM borrow_rates
+            WHERE ticker IN ({placeholders})
+            GROUP BY report_date, ticker
+            ORDER BY report_date ASC
+        """, tuple(tickers))
+    else:
+        rows = query("""
+            SELECT report_date, ticker, MIN(borrow_rate_pct) as best_rate
+            FROM borrow_rates
+            GROUP BY report_date, ticker
+            ORDER BY report_date ASC
+        """)
+    return rows

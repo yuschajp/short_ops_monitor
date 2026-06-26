@@ -1,10 +1,11 @@
 """
 run.py
-Main entry point. Orchestrates data load → analytics → dashboard.
+Main entry point. Orchestrates data load → analytics → dashboard → email.
 
-Modes:
-  python run.py           → uses connector orchestrator (sim mode by default)
-  python run.py --sim     → forces raw simulation (bypasses connectors entirely)
+Usage:
+  python run.py              # full run, email if env vars set
+  python run.py --sim        # force raw simulation
+  python run.py --no-email   # skip email regardless
 """
 
 import sys
@@ -22,9 +23,10 @@ logger = logging.getLogger("run")
 
 from modules.analytics import (
     pb_rate_comparison, htb_etb_monitor, cost_of_carry,
-    recall_risk_report, fails_report, threshold_report
+    recall_risk_report, fails_report, threshold_report, borrow_rate_history
 )
 from modules.dashboard import generate_dashboard
+from modules.email_alert import send_alert
 
 def get_last_business_day(d):
     d -= timedelta(days=1)
@@ -38,13 +40,13 @@ def main():
     as_of     = today.isoformat()
     prior_str = prior.isoformat()
 
-    force_sim = "--sim" in sys.argv
+    force_sim  = "--sim" in sys.argv
+    no_email   = "--no-email" in sys.argv
 
     print(f"\nShort Ops Monitor | {as_of}")
     print("=" * 52)
 
     if force_sim:
-        # Raw simulation — no connectors
         from modules.simulate_pb_data import (
             generate_pb_rates, generate_recalls, generate_fails, generate_threshold_list
         )
@@ -56,19 +58,19 @@ def main():
         insert_fails(generate_fails(today))
         insert_threshold(generate_threshold_list())
     else:
-        # Connector orchestrator (sim mode inside connectors until DW creds set)
         from connectors.orchestrator import run_all
         print("Mode: CONNECTOR ORCHESTRATOR (sim fallback active)\n")
         counts = run_all()
         print(f"\n  Loaded: {counts}\n")
 
     # ── Analytics ──────────────────────────────────────────────────────────
-    pb_comp        = pb_rate_comparison(as_of)
-    htb_alerts     = htb_etb_monitor(as_of, prior_str)
-    carry, total   = cost_of_carry(as_of)
-    recalls        = recall_risk_report()
-    fails          = fails_report()
-    threshold      = threshold_report()
+    pb_comp      = pb_rate_comparison(as_of)
+    htb_alerts   = htb_etb_monitor(as_of, prior_str)
+    carry, total = cost_of_carry(as_of)
+    recalls      = recall_risk_report()
+    fails        = fails_report()
+    threshold    = threshold_report()
+    rate_history = borrow_rate_history()
 
     # ── Console summary ────────────────────────────────────────────────────
     print(f"PB RATE COMPARISON — Top 5 Savings Opportunities:")
@@ -98,8 +100,16 @@ def main():
 
     # ── Dashboard ──────────────────────────────────────────────────────────
     print("\nGenerating dashboard...")
-    generate_dashboard(as_of, pb_comp, htb_alerts, carry, total, recalls, fails, threshold)
-    print("  Dashboard written to docs/index.html\n")
+    generate_dashboard(as_of, pb_comp, htb_alerts, carry, total, recalls, fails, threshold, rate_history)
+    print("  Dashboard written to docs/index.html")
+
+    # ── Email alert ────────────────────────────────────────────────────────
+    if not no_email:
+        print("\nSending email alert...")
+        sent = send_alert(as_of, pb_comp, htb_alerts, carry, total, recalls, fails)
+        if not sent:
+            print("  Skipped (set ALERT_FROM and ALERT_APP_PASS env vars to enable)")
+    print()
 
 if __name__ == "__main__":
     main()
